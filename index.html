@@ -556,22 +556,10 @@ html, body {
         <button onclick="doLogout()" style="background:none; border:1px solid rgba(255,255,255,.3); color:#fff; padding:4px 12px; border-radius:6px; font-family:'Tenor Sans',serif; font-size:.75rem; cursor:pointer;">Switch</button>
       </div>
 
-      <!-- Visit Month -->
+      <!-- Visit Date -->
       <div class="form-group">
-        <label class="form-label">Month</label>
-        <input type="hidden" id="visitDate">
-        <div class="month-picker-trigger" id="monthPickerTrigger">
-          <span id="monthPickerLabel"></span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <div class="month-picker-dropdown" id="monthPickerDropdown">
-          <div class="month-picker-year">
-            <button id="mpPrevYear">&#8249;</button>
-            <span id="mpYearLabel"></span>
-            <button id="mpNextYear">&#8250;</button>
-          </div>
-          <div class="month-picker-grid" id="mpGrid"></div>
-        </div>
+        <label class="form-label">Date</label>
+        <input type="date" class="form-input" id="visitDate">
       </div>
 
       <!-- Service -->
@@ -1098,71 +1086,19 @@ tipInput.addEventListener('input', () => {
   }
 });
 
-// ── Custom Month Picker ──
-const MP_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const MP_MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-let mpYear, mpMonth;
-
-function mpInit() {
+// ── Date Picker Init ──
+function initVisitDate() {
   const now = pragueNow();
-  mpYear = now.getFullYear();
-  mpMonth = now.getMonth();
-  mpSetValue(mpYear, mpMonth);
-  mpRender();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  document.getElementById('visitDate').value = y + '-' + m + '-' + d;
 }
-
-function mpSetValue(y, m) {
-  mpYear = y;
-  mpMonth = m;
-  document.getElementById('visitDate').value = y + '-' + String(m + 1).padStart(2, '0');
-  document.getElementById('monthPickerLabel').textContent = MP_MONTHS_FULL[m] + ' ' + y;
-  mpRender();
-}
-
-function mpRender() {
-  document.getElementById('mpYearLabel').textContent = mpYear;
-  const grid = document.getElementById('mpGrid');
-  const now = pragueNow();
-  const todayY = now.getFullYear();
-  const todayM = now.getMonth();
-  const selVal = document.getElementById('visitDate').value;
-
-  grid.innerHTML = MP_MONTHS.map((name, i) => {
-    const val = mpYear + '-' + String(i + 1).padStart(2, '0');
-    const isActive = val === selVal;
-    const isToday = mpYear === todayY && i === todayM && !isActive;
-    return '<button data-m="' + i + '" class="' + (isActive ? 'active' : '') + (isToday ? ' today' : '') + '">' + name + '</button>';
-  }).join('');
-}
-
-document.getElementById('monthPickerTrigger').addEventListener('click', () => {
-  const dd = document.getElementById('monthPickerDropdown');
-  const trigger = document.getElementById('monthPickerTrigger');
-  const isOpen = dd.classList.contains('open');
-  dd.classList.toggle('open', !isOpen);
-  trigger.classList.toggle('open', !isOpen);
+initVisitDate();
+document.getElementById('visitDate').addEventListener('change', () => {
+  updateHeader();
+  renderTodayEntries();
 });
-
-document.getElementById('mpPrevYear').addEventListener('click', () => { mpYear--; mpRender(); });
-document.getElementById('mpNextYear').addEventListener('click', () => { mpYear++; mpRender(); });
-
-document.getElementById('mpGrid').addEventListener('click', e => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
-  mpSetValue(mpYear, parseInt(btn.dataset.m));
-  document.getElementById('monthPickerDropdown').classList.remove('open');
-  document.getElementById('monthPickerTrigger').classList.remove('open');
-});
-
-// Close picker when clicking outside
-document.addEventListener('click', e => {
-  if (!e.target.closest('.form-group:has(#monthPickerTrigger)')) {
-    document.getElementById('monthPickerDropdown').classList.remove('open');
-    document.getElementById('monthPickerTrigger').classList.remove('open');
-  }
-});
-
-mpInit();
 
 // ── Setup toggles ──
 setupToggleGroup('paymentToggle');
@@ -1185,7 +1121,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
   const discOpt = discountSelect.options[discountSelect.selectedIndex];
 
   const entry = {
-    timestamp: document.getElementById('visitDate').value + '-01T' + pragueNow().toTimeString().slice(0,8),
+    timestamp: document.getElementById('visitDate').value + 'T' + pragueNow().toTimeString().slice(0,8),
     visitDate: document.getElementById('visitDate').value,
     therapist: therapist,
     service: serviceSelect.value,
@@ -1216,7 +1152,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
   currentPrice = 0;
   document.getElementById('spLabel').textContent = 'Select service...';
   document.getElementById('spLabel').classList.add('sp-placeholder');
-  mpInit();
+  initVisitDate();
   document.querySelectorAll('#paymentToggle .tap-btn').forEach(b => b.classList.remove('active'));
   discountSelect.selectedIndex = 0;
   customDiscountGroup.style.display = 'none';
@@ -1266,12 +1202,15 @@ document.getElementById('entriesToggle').addEventListener('click', () => {
 
 function renderTodayEntries() {
   const entries = getEntries();
-  const selectedMonth = document.getElementById('visitDate').value;
-  const todayItems = entries.filter(e => (e.visitDate && e.visitDate === selectedMonth) || (!e.visitDate && e.timestamp && e.timestamp.startsWith(selectedMonth)));
+  const selectedDate = document.getElementById('visitDate').value;
+  const todayItems = entries.filter(e => {
+    const eDate = e.visitDate || (e.timestamp ? e.timestamp.slice(0, 10) : '');
+    return eDate === selectedDate;
+  });
   const container = document.getElementById('todayEntries');
 
   if (todayItems.length === 0) {
-    container.innerHTML = '<div class="empty-state">No entries this month</div>';
+    container.innerHTML = '<div class="empty-state">No entries for this date</div>';
     return;
   }
 
