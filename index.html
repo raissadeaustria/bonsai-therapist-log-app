@@ -675,7 +675,7 @@ html, body {
     <!-- TAB: History -->
     <div class="tab-content" id="tabHistory">
       <div id="historyContent"></div>
-      <button id="btnClearAll" style="width:100%;padding:14px;border:2px solid #e8c4c3;border-radius:var(--radius);background:var(--card);font-family:inherit;font-size:.85rem;color:var(--danger);cursor:pointer;margin-top:20px;display:none;">Delete All Entries</button>
+      <button id="btnStartNewMonth" style="width:100%;padding:14px;border:2px solid var(--primary);border-radius:var(--radius);background:var(--card);font-family:inherit;font-size:.85rem;color:var(--primary);cursor:pointer;margin-top:20px;display:none;">Start New Month</button>
     </div>
 
 
@@ -1353,7 +1353,7 @@ function renderHistory() {
   const months = Object.keys(grouped).sort().reverse();
   const container = document.getElementById('historyContent');
 
-  document.getElementById('btnClearAll').style.display = entries.length > 0 ? 'block' : 'none';
+  document.getElementById('btnStartNewMonth').style.display = entries.length > 0 ? 'block' : 'none';
 
   if (months.length === 0) {
     container.innerHTML = '<div class="empty-state">No entries yet</div>';
@@ -1409,15 +1409,29 @@ function renderHistory() {
   }).join('');
 }
 
-// ── Delete All ──
-document.getElementById('btnClearAll').addEventListener('click', () => {
-  if (!confirm('Delete ALL entries? This cannot be undone.')) return;
-  if (!confirm('Are you sure? All local data will be permanently deleted.')) return;
-  localStorage.removeItem(STORAGE_KEY);
+// ── Start New Month ──
+document.getElementById('btnStartNewMonth').addEventListener('click', () => {
+  const now = pragueNow();
+  const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const entries = getEntries();
+  const oldCount = entries.filter(e => {
+    const m = e.visitDate ? e.visitDate.slice(0, 7) : (e.timestamp ? e.timestamp.slice(0, 7) : '');
+    return m && m !== currentMonth;
+  }).length;
+  if (oldCount === 0) {
+    showToast('No old entries to clear');
+    return;
+  }
+  if (!confirm('Clear ' + oldCount + ' entries from previous months? Data is already saved in Google Sheets.')) return;
+  const currentEntries = entries.filter(e => {
+    const m = e.visitDate ? e.visitDate.slice(0, 7) : (e.timestamp ? e.timestamp.slice(0, 7) : '');
+    return m === currentMonth;
+  });
+  saveEntries(currentEntries);
   updateHeader();
   renderTodayEntries();
   renderHistory();
-  showToast('All data cleared');
+  showToast('Old entries cleared!');
 });
 
 // ── Export ──
