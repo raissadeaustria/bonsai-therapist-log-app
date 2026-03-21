@@ -612,21 +612,21 @@ html, body {
         <div class="discount-info" id="discountInfo" style="display:none"></div>
       </div>
 
-      <!-- Amount Paid -->
-      <div class="form-group">
-        <label class="form-label">Amount Paid</label>
-        <div class="price-display">
-          <input type="number" class="form-input" id="amountPaid" placeholder="0" inputmode="numeric">
-          <span class="price-original" id="originalPrice" style="display:none"></span>
+      <!-- Amount Paid + Currency (side by side) -->
+      <div style="display:flex; gap:12px;">
+        <div class="form-group" style="flex:1; min-width:0;">
+          <label class="form-label">Amount Paid</label>
+          <div class="price-display">
+            <input type="number" class="form-input" id="amountPaid" placeholder="0" inputmode="numeric">
+            <span class="price-original" id="originalPrice" style="display:none"></span>
+          </div>
         </div>
-      </div>
-
-      <!-- Currency -->
-      <div class="form-group">
-        <label class="form-label">Currency</label>
-        <div class="toggle-group" id="currencyToggle" style="max-width:200px">
-          <button class="toggle-btn active" data-val="CZK">CZK</button>
-          <button class="toggle-btn" data-val="EUR">EUR</button>
+        <div class="form-group" style="flex:1; min-width:0;">
+          <label class="form-label">Currency</label>
+          <div class="toggle-group" id="currencyToggle">
+            <button class="toggle-btn active" data-val="CZK">CZK</button>
+            <button class="toggle-btn" data-val="EUR">EUR</button>
+          </div>
         </div>
       </div>
 
