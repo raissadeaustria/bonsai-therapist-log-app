@@ -650,12 +650,12 @@ html, body {
         <input type="text" class="form-input" id="clientName" placeholder="Client name" autocomplete="off">
       </div>
       <div class="form-group">
-        <label class="form-label">Client Email <span style="opacity:.5">(optional)</span></label>
-        <input type="email" class="form-input" id="clientEmail" placeholder="email@example.com" autocomplete="off">
+        <label class="form-label">Client Phone <span style="opacity:.5">(optional)</span></label>
+        <input type="tel" class="form-input" id="clientPhone" placeholder="+420" autocomplete="off" value="+">
       </div>
       <div class="form-group">
-        <label class="form-label">Client Phone <span style="opacity:.5">(optional)</span></label>
-        <input type="tel" class="form-input" id="clientPhone" placeholder="+420..." autocomplete="off">
+        <label class="form-label">Client Email <span style="opacity:.5">(optional)</span></label>
+        <input type="email" class="form-input" id="clientEmail" placeholder="email@example.com" autocomplete="off">
       </div>
 
       <!-- Save -->
@@ -1150,7 +1150,7 @@ document.getElementById('btnSave').addEventListener('click', () => {
     tipPayment: tipPayment,
     clientName: document.getElementById('clientName').value.trim(),
     clientEmail: document.getElementById('clientEmail').value.trim(),
-    clientPhone: document.getElementById('clientPhone').value.trim(),
+    clientPhone: document.getElementById('clientPhone').value.trim() === '+' ? '' : document.getElementById('clientPhone').value.trim(),
     currency: currency
   };
 
@@ -1180,8 +1180,8 @@ document.getElementById('btnSave').addEventListener('click', () => {
   tipInput.value = '0';
   tipPaymentGroup.classList.remove('show');
   document.getElementById('clientName').value = '';
+  document.getElementById('clientPhone').value = '+';
   document.getElementById('clientEmail').value = '';
-  document.getElementById('clientPhone').value = '';
   // Reset currency to CZK
   document.querySelectorAll('#currencyToggle .toggle-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.val === 'CZK');
