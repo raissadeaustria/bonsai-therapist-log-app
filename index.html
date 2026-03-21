@@ -787,8 +787,24 @@ function syncUpdateToSheet(timestamp, updates) {
   sheetPost({ _action: 'update', timestamp, ...updates });
 }
 
-function syncDeleteFromSheet(timestamp) {
-  sheetPost({ _action: 'delete', timestamp });
+function syncDeleteFromSheet(entry) {
+  sheetPost({
+    visitDate: entry.visitDate || '',
+    timestamp: entry.timestamp || '',
+    therapist: 'DELETED',
+    service: entry.service || '',
+    price: '',
+    payment: entry.payment || '',
+    discount: '',
+    discountCode: '',
+    amountPaid: '',
+    tip: '',
+    tipPayment: '',
+    clientName: '',
+    clientEmail: '',
+    clientPhone: '',
+    currency: entry.currency || ''
+  });
 }
 
 // Load entries from Google Sheets using JSONP
@@ -1235,7 +1251,7 @@ function deleteEntryByIndex(idx) {
   const deleted = entries[idx];
   entries.splice(idx, 1);
   saveEntries(entries);
-  if (deleted && deleted.timestamp) syncDeleteFromSheet(deleted.timestamp);
+  if (deleted) syncDeleteFromSheet(deleted);
   updateHeader();
   renderTodayEntries();
   renderHistory();
@@ -1314,9 +1330,10 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 function deleteEntry(timestamp) {
   if (!confirm('Delete this entry?')) return;
   let entries = getEntries();
+  const deleted = entries.find(e => e.timestamp === timestamp);
   entries = entries.filter(e => e.timestamp !== timestamp);
   saveEntries(entries);
-  syncDeleteFromSheet(timestamp);
+  if (deleted) syncDeleteFromSheet(deleted);
   updateHeader();
   renderTodayEntries();
   renderHistory();
