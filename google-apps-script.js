@@ -4,15 +4,31 @@ function doPost(e) {
 
   // Ensure header row exists
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['VisitDate','Timestamp','Therapist','Service','Price','Payment','Discount','DiscountCode','AmountPaid','Tip','TipPayment','ClientName','ClientEmail','ClientPhone','Currency']);
+    sheet.appendRow(['VisitDate','Timestamp','Therapist','Service','Price','Payment','Discount','DiscountCode','AmountPaid','Tip','TipPayment','ClientName','ClientEmail','ClientPhone','Currency','Status']);
   }
 
-  // Handle delete
+  // Helper: compare timestamps (Sheets converts to Date objects, so convert both to string)
+  function matchTimestamp(cellValue, tsString) {
+    if (!cellValue || !tsString) return false;
+    var cellStr = (cellValue instanceof Date) ? cellValue.toISOString() : String(cellValue);
+    // Normalize both to remove milliseconds and timezone differences
+    return cellStr.replace(/\.\d{3}Z$/, '').replace(/Z$/, '') === tsString.replace(/\.\d{3}Z$/, '').replace(/Z$/, '');
+  }
+
+  // Handle delete (mark row red with DELETED status)
   if (data._action === 'delete') {
     var rows = sheet.getDataRange().getValues();
+    var headers = rows[0];
+    var statusCol = headers.indexOf('Status');
+    if (statusCol === -1) {
+      statusCol = sheet.getLastColumn();
+      sheet.getRange(1, statusCol + 1).setValue('Status');
+    }
     for (var i = rows.length - 1; i >= 1; i--) {
-      if (rows[i][1] === data.timestamp) {
-        sheet.deleteRow(i + 1);
+      if (matchTimestamp(rows[i][1], data.timestamp)) {
+        var lastCol = Math.max(sheet.getLastColumn(), statusCol + 1);
+        sheet.getRange(i + 1, 1, 1, lastCol).setBackground('#FFCCCC');
+        sheet.getRange(i + 1, statusCol + 1).setValue('DELETED');
         break;
       }
     }
@@ -24,10 +40,11 @@ function doPost(e) {
     var rows = sheet.getDataRange().getValues();
     var headers = rows[0];
     for (var i = rows.length - 1; i >= 1; i--) {
-      if (rows[i][1] === data.timestamp) {
+      if (matchTimestamp(rows[i][1], data.timestamp)) {
         for (var key in data) {
           if (key === '_action' || key === 'timestamp') continue;
-          var col = headers.indexOf(key.charAt(0).toUpperCase() + key.slice(1));
+          var colName = key.charAt(0).toUpperCase() + key.slice(1);
+          var col = headers.indexOf(colName);
           if (col === -1) col = headers.indexOf(key);
           if (col >= 0) sheet.getRange(i + 1, col + 1).setValue(data[key]);
         }
