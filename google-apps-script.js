@@ -59,28 +59,27 @@ function doPost(e) {
 
   // Default: add new entry
   var newRow = sheet.getLastRow() + 1;
-  sheet.appendRow([
-    data.visitDate,
-    data.timestamp,
-    data.therapist,
-    data.service,
-    data.price,
-    data.payment,
-    data.discount,
-    data.discountCode,
-    data.amountPaid,
-    data.tip,
-    data.tipPayment,
-    data.clientName,
-    data.clientEmail,
-    data.clientPhone,
-    data.currency
-  ]);
-  // Force columns to plain text so Sheets doesn't convert numbers to dates
-  // Col 1=VisitDate, 2=Timestamp, 5=Price, 7=Discount, 9=AmountPaid, 10=Tip
-  [1, 2, 5, 7, 9, 10].forEach(function(col) {
-    sheet.getRange(newRow, col).setNumberFormat('@');
-  });
+  var rowData = [
+    String(data.visitDate || ''),
+    String(data.timestamp || ''),
+    String(data.therapist || ''),
+    String(data.service || ''),
+    String(data.price || ''),
+    String(data.payment || ''),
+    String(data.discount || ''),
+    String(data.discountCode || ''),
+    String(data.amountPaid || ''),
+    String(data.tip || ''),
+    String(data.tipPayment || ''),
+    String(data.clientName || ''),
+    String(data.clientEmail || ''),
+    String(data.clientPhone || ''),
+    String(data.currency || '')
+  ];
+  // Set entire row to plain text first, then write values to prevent auto-conversion
+  var range = sheet.getRange(newRow, 1, 1, rowData.length);
+  range.setNumberFormat('@');
+  range.setValues([rowData]);
 
   return ContentService.createTextOutput(JSON.stringify({status: 'ok'})).setMimeType(ContentService.MimeType.JSON);
 }
