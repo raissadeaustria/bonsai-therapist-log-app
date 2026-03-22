@@ -41,20 +41,29 @@ function doPost(e) {
     var rows = range.getDisplayValues();
     var headers = rows[0];
     var searchTs = normalizeTs(data.timestamp);
+    var foundRow = -1;
     for (var i = rows.length - 1; i >= 1; i--) {
       var cellTs = normalizeTs(rows[i][1]);
-      if (cellTs === searchTs) {
-        for (var key in data) {
-          if (key === '_action' || key === 'timestamp') continue;
-          var colName = key.charAt(0).toUpperCase() + key.slice(1);
-          var col = headers.indexOf(colName);
-          if (col === -1) col = headers.indexOf(key);
-          if (col >= 0) sheet.getRange(i + 1, col + 1).setValue(data[key]);
-        }
+      if (cellTs === searchTs || cellTs.indexOf(searchTs) >= 0 || searchTs.indexOf(cellTs) >= 0) {
+        foundRow = i;
         break;
       }
     }
-    return ContentService.createTextOutput(JSON.stringify({status: 'updated'})).setMimeType(ContentService.MimeType.JSON);
+    if (foundRow >= 0) {
+      for (var key in data) {
+        if (key === '_action' || key === 'timestamp') continue;
+        var colName = key.charAt(0).toUpperCase() + key.slice(1);
+        var col = headers.indexOf(colName);
+        if (col === -1) col = headers.indexOf(key);
+        if (col >= 0) {
+          var cell = sheet.getRange(foundRow + 1, col + 1);
+          cell.setNumberFormat('@');
+          cell.setValue(String(data[key]));
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({status: 'updated'})).setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService.createTextOutput(JSON.stringify({status: 'not_found', searchTs: searchTs})).setMimeType(ContentService.MimeType.JSON);
   }
 
   // Default: add new entry
