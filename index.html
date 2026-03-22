@@ -1125,7 +1125,13 @@ function recalcAmount() {
     pct = parseInt(opt.dataset.pct) || 0;
   }
 
-  if (pct === 0) {
+  // Voucher means full price paid via voucher — no discount applied
+  const payment = getToggleValue('paymentToggle');
+  if (payment === 'Voucher') {
+    amountPaid.value = price;
+    discountInfo.style.display = 'none';
+    originalPrice.style.display = 'none';
+  } else if (pct === 0) {
     amountPaid.value = price;
     discountInfo.style.display = 'none';
     originalPrice.style.display = 'none';
@@ -1176,7 +1182,7 @@ document.getElementById('visitDate').addEventListener('change', () => {
 });
 
 // ── Setup toggles ──
-setupToggleGroup('paymentToggle');
+setupToggleGroup('paymentToggle', recalcAmount);
 setupToggleGroup('currencyToggle');
 setupToggleGroup('tipPaymentToggle');
 
@@ -1429,24 +1435,11 @@ function renderHistory() {
     const monthName = monthNames[parseInt(mon) - 1] + ' ' + year;
     const items = grouped[monthKey].entries;
 
-    const totalCZK = items.filter(e => e.currency !== 'EUR').reduce((s, e) => s + (parseInt(e.amountPaid) || 0), 0);
-    const totalEUR = items.filter(e => e.currency === 'EUR').reduce((s, e) => s + (parseInt(e.amountPaid) || 0), 0);
-    const totalTip = items.reduce((s, e) => s + (parseInt(e.tip) || 0), 0);
-    const cardTotal = items.filter(e => e.payment === 'Card').reduce((s, e) => s + (parseInt(e.amountPaid) || 0), 0);
-    const cashTotal = items.filter(e => e.payment === 'Cash').reduce((s, e) => s + (parseInt(e.amountPaid) || 0), 0);
-
-    let totalsStr = '<strong>' + totalCZK.toLocaleString() + ' Kc</strong>';
-    if (totalEUR > 0) totalsStr += ' + <strong>' + totalEUR + '\u20AC</strong>';
-
     return '<div class="day-group" style="margin-bottom: 20px;">' +
       '<div class="day-header" style="background: var(--dark); color: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px;">' +
         '<h3 style="color: #fff; font-size: 1.1rem;">' + monthName + '</h3>' +
         '<div style="font-size: .8rem; opacity: .85; margin-top: 4px;">' +
-          items.length + ' entries &middot; ' + totalsStr +
-          (totalTip > 0 ? ' &middot; Tips: ' + totalTip.toLocaleString() + ' Kc' : '') +
-        '</div>' +
-        '<div style="font-size: .75rem; opacity: .7; margin-top: 2px;">' +
-          'Card: ' + cardTotal.toLocaleString() + ' Kc &middot; Cash: ' + cashTotal.toLocaleString() + ' Kc' +
+          '<strong>' + items.length + '</strong> clients' +
         '</div>' +
       '</div>' +
       items.slice().reverse().map((e, idx) => {
