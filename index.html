@@ -580,7 +580,7 @@ html, body {
         <input type="hidden" id="serviceSelect" value="">
         <div class="service-picker" id="servicePicker">
           <div class="service-picker-trigger" id="spTrigger">
-            <input type="text" class="sp-trigger-input" id="spSearch" placeholder="Select service..." autocomplete="off" readonly>
+            <input type="text" class="sp-trigger-input" id="spSearch" placeholder="Select service..." autocomplete="off">
             <span id="spLabel" class="sp-selected-label" style="display:none;"></span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
@@ -1021,14 +1021,12 @@ function spOpen() {
   dd.classList.add('open');
   trigger.classList.add('open');
   // Show input, hide label
-  searchInput.removeAttribute('readonly');
   searchInput.style.display = '';
   searchInput.classList.remove('has-value');
   searchInput.value = '';
   searchInput.placeholder = 'Search... (e.g. TO, foot, office, hot)';
   label.style.display = 'none';
   spRender('');
-  searchInput.focus();
 }
 
 function spClose() {
@@ -1038,7 +1036,7 @@ function spClose() {
   const label = document.getElementById('spLabel');
   dd.classList.remove('open');
   trigger.classList.remove('open');
-  searchInput.setAttribute('readonly', '');
+  searchInput.blur();
   searchInput.value = '';
   // If a service is selected, show label; otherwise show input placeholder
   if (serviceSelect.value) {
@@ -1052,20 +1050,28 @@ function spClose() {
   }
 }
 
-document.getElementById('spTrigger').addEventListener('click', (e) => {
-  if (e.target.id === 'spSearch' && !document.getElementById('spSearch').hasAttribute('readonly')) return;
-  const dd = document.getElementById('spDropdown');
-  if (dd.classList.contains('open')) {
-    spClose();
-  } else {
-    spOpen();
-  }
-});
-
+// When input is focused (tapped on mobile), open dropdown — keyboard shows naturally
 document.getElementById('spSearch').addEventListener('focus', () => {
   const dd = document.getElementById('spDropdown');
   if (!dd.classList.contains('open')) {
     spOpen();
+  }
+});
+
+// Chevron / label area click toggles
+document.getElementById('spTrigger').addEventListener('click', (e) => {
+  const searchInput = document.getElementById('spSearch');
+  // If user tapped the input itself, let focus handler deal with it
+  if (e.target === searchInput) return;
+  const dd = document.getElementById('spDropdown');
+  if (dd.classList.contains('open')) {
+    spClose();
+  } else {
+    // Show input and focus it so keyboard appears
+    searchInput.style.display = '';
+    searchInput.classList.remove('has-value');
+    document.getElementById('spLabel').style.display = 'none';
+    searchInput.focus();
   }
 });
 
@@ -1224,7 +1230,6 @@ document.getElementById('btnSave').addEventListener('click', () => {
   document.getElementById('spSearch').style.display = '';
   document.getElementById('spSearch').classList.remove('has-value');
   document.getElementById('spSearch').placeholder = 'Select service...';
-  document.getElementById('spSearch').setAttribute('readonly', '');
   initVisitDate();
   document.querySelectorAll('#paymentToggle .tap-btn').forEach(b => b.classList.remove('active'));
   discountSelect.selectedIndex = 0;
