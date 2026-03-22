@@ -64,6 +64,26 @@ function doPost(e) {
 
 function doGet(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = sheet.getDataRange().getDisplayValues();
-  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+  var rows = sheet.getDataRange().getDisplayValues();
+  // Convert rows to array of objects using header row
+  var headers = rows[0];
+  var entries = [];
+  for (var i = 1; i < rows.length; i++) {
+    // Skip deleted entries
+    var statusIdx = headers.indexOf('Status');
+    if (statusIdx >= 0 && rows[i][statusIdx] === 'DELETED') continue;
+    var obj = {};
+    for (var j = 0; j < headers.length; j++) {
+      var key = headers[j].charAt(0).toLowerCase() + headers[j].slice(1);
+      obj[key] = rows[i][j];
+    }
+    entries.push(obj);
+  }
+  var json = JSON.stringify(entries);
+  // Support JSONP callback
+  var callback = e && e.parameter && e.parameter.callback;
+  if (callback) {
+    return ContentService.createTextOutput(callback + '(' + json + ')').setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
 }
