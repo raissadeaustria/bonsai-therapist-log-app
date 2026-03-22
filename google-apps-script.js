@@ -60,21 +60,21 @@ function doPost(e) {
   // Default: add new entry
   var newRow = sheet.getLastRow() + 1;
   var rowData = [
-    String(data.visitDate || ''),
-    String(data.timestamp || ''),
-    String(data.therapist || ''),
-    String(data.service || ''),
-    String(data.price || ''),
-    String(data.payment || ''),
-    String(data.discount || ''),
-    String(data.discountCode || ''),
-    String(data.amountPaid || ''),
-    String(data.tip || ''),
-    String(data.tipPayment || ''),
-    String(data.clientName || ''),
-    String(data.clientEmail || ''),
-    String(data.clientPhone || ''),
-    String(data.currency || '')
+    String(data.visitDate != null ? data.visitDate : ''),
+    String(data.timestamp != null ? data.timestamp : ''),
+    String(data.therapist != null ? data.therapist : ''),
+    String(data.service != null ? data.service : ''),
+    String(data.price != null ? data.price : ''),
+    String(data.payment != null ? data.payment : ''),
+    String(data.discount != null ? data.discount : ''),
+    String(data.discountCode != null ? data.discountCode : ''),
+    String(data.amountPaid != null ? data.amountPaid : ''),
+    String(data.tip != null ? data.tip : ''),
+    String(data.tipPayment != null ? data.tipPayment : ''),
+    String(data.clientName != null ? data.clientName : ''),
+    String(data.clientEmail != null ? data.clientEmail : ''),
+    String(data.clientPhone != null ? data.clientPhone : ''),
+    String(data.currency != null ? data.currency : '')
   ];
   // Set entire row to plain text first, then write values to prevent auto-conversion
   var range = sheet.getRange(newRow, 1, 1, rowData.length);
