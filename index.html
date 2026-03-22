@@ -450,18 +450,30 @@ html, body {
 }
 .service-picker-dropdown.open { display: block; }
 
-.sp-search {
-  width: 100%;
-  padding: 12px 14px;
+.sp-trigger-input {
   border: none;
-  border-bottom: 1px solid var(--border);
-  font-family: inherit;
-  font-size: .85rem;
-  color: var(--text);
   outline: none;
-  background: #faf9f6;
+  background: transparent;
+  font-family: inherit;
+  font-size: .9rem;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  cursor: pointer;
 }
-.sp-search::placeholder { color: #bbb; }
+.sp-trigger-input::placeholder { color: #999; }
+.sp-trigger-input.has-value { display: none; }
+.sp-selected-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.sp-selected-label.sp-placeholder { color: #999; }
+
 
 .sp-group-label {
   padding: 8px 14px 4px;
@@ -568,11 +580,11 @@ html, body {
         <input type="hidden" id="serviceSelect" value="">
         <div class="service-picker" id="servicePicker">
           <div class="service-picker-trigger" id="spTrigger">
-            <span id="spLabel" class="sp-placeholder">Select service...</span>
+            <input type="text" class="sp-trigger-input" id="spSearch" placeholder="Select service..." autocomplete="off" readonly>
+            <span id="spLabel" class="sp-selected-label" style="display:none;"></span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div class="service-picker-dropdown" id="spDropdown">
-            <input type="text" class="sp-search" id="spSearch" placeholder="Search... (e.g. TO, foot, office, hot)" autocomplete="off">
             <div id="spOptions"></div>
           </div>
         </div>
@@ -1001,16 +1013,59 @@ function spRender(filter) {
   container.innerHTML = html;
 }
 
-document.getElementById('spTrigger').addEventListener('click', () => {
+function spOpen() {
   const dd = document.getElementById('spDropdown');
   const trigger = document.getElementById('spTrigger');
-  const isOpen = dd.classList.contains('open');
-  dd.classList.toggle('open', !isOpen);
-  trigger.classList.toggle('open', !isOpen);
-  if (!isOpen) {
-    document.getElementById('spSearch').value = '';
-    spRender('');
-    setTimeout(() => document.getElementById('spSearch').focus(), 50);
+  const searchInput = document.getElementById('spSearch');
+  const label = document.getElementById('spLabel');
+  dd.classList.add('open');
+  trigger.classList.add('open');
+  // Show input, hide label
+  searchInput.removeAttribute('readonly');
+  searchInput.style.display = '';
+  searchInput.classList.remove('has-value');
+  searchInput.value = '';
+  searchInput.placeholder = 'Search... (e.g. TO, foot, office, hot)';
+  label.style.display = 'none';
+  spRender('');
+  searchInput.focus();
+}
+
+function spClose() {
+  const dd = document.getElementById('spDropdown');
+  const trigger = document.getElementById('spTrigger');
+  const searchInput = document.getElementById('spSearch');
+  const label = document.getElementById('spLabel');
+  dd.classList.remove('open');
+  trigger.classList.remove('open');
+  searchInput.setAttribute('readonly', '');
+  searchInput.value = '';
+  // If a service is selected, show label; otherwise show input placeholder
+  if (serviceSelect.value) {
+    searchInput.style.display = 'none';
+    searchInput.classList.add('has-value');
+    label.style.display = '';
+  } else {
+    searchInput.style.display = '';
+    searchInput.placeholder = 'Select service...';
+    label.style.display = 'none';
+  }
+}
+
+document.getElementById('spTrigger').addEventListener('click', (e) => {
+  if (e.target.id === 'spSearch' && !document.getElementById('spSearch').hasAttribute('readonly')) return;
+  const dd = document.getElementById('spDropdown');
+  if (dd.classList.contains('open')) {
+    spClose();
+  } else {
+    spOpen();
+  }
+});
+
+document.getElementById('spSearch').addEventListener('focus', () => {
+  const dd = document.getElementById('spDropdown');
+  if (!dd.classList.contains('open')) {
+    spOpen();
   }
 });
 
@@ -1025,15 +1080,13 @@ document.getElementById('spOptions').addEventListener('click', e => {
   currentPrice = parseInt(opt.dataset.price);
   document.getElementById('spLabel').textContent = opt.dataset.value;
   document.getElementById('spLabel').classList.remove('sp-placeholder');
-  document.getElementById('spDropdown').classList.remove('open');
-  document.getElementById('spTrigger').classList.remove('open');
+  spClose();
   recalcAmount();
 });
 
 document.addEventListener('click', e => {
   if (!e.target.closest('#servicePicker')) {
-    document.getElementById('spDropdown').classList.remove('open');
-    document.getElementById('spTrigger').classList.remove('open');
+    spClose();
   }
 });
 
@@ -1166,8 +1219,12 @@ document.getElementById('btnSave').addEventListener('click', () => {
   // Reset form except therapist
   serviceSelect.value = '';
   currentPrice = 0;
-  document.getElementById('spLabel').textContent = 'Select service...';
-  document.getElementById('spLabel').classList.add('sp-placeholder');
+  document.getElementById('spLabel').textContent = '';
+  document.getElementById('spLabel').style.display = 'none';
+  document.getElementById('spSearch').style.display = '';
+  document.getElementById('spSearch').classList.remove('has-value');
+  document.getElementById('spSearch').placeholder = 'Select service...';
+  document.getElementById('spSearch').setAttribute('readonly', '');
   initVisitDate();
   document.querySelectorAll('#paymentToggle .tap-btn').forEach(b => b.classList.remove('active'));
   discountSelect.selectedIndex = 0;

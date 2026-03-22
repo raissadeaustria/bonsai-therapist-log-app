@@ -7,6 +7,11 @@ function doPost(e) {
     sheet.appendRow(['VisitDate','Timestamp','Therapist','Service','Price','Payment','Discount','DiscountCode','AmountPaid','Tip','TipPayment','ClientName','ClientEmail','ClientPhone','Currency','Status']);
   }
 
+  // Helper: normalize timestamp for comparison (remove T, .000Z, Z, trim)
+  function normalizeTs(val) {
+    return String(val).replace('T', ' ').replace('.000Z', '').replace('Z', '').trim();
+  }
+
   // Handle delete (mark row red with DELETED status)
   if (data._action === 'delete') {
     var range = sheet.getDataRange();
@@ -17,10 +22,10 @@ function doPost(e) {
       statusCol = sheet.getLastColumn();
       sheet.getRange(1, statusCol + 1).setValue('Status');
     }
+    var searchTs = normalizeTs(data.timestamp);
     for (var i = rows.length - 1; i >= 1; i--) {
-      var cellTs = String(rows[i][1]).trim();
-      var searchTs = String(data.timestamp).trim();
-      if (cellTs === searchTs || cellTs.indexOf(searchTs) >= 0 || searchTs.indexOf(cellTs) >= 0) {
+      var cellTs = normalizeTs(rows[i][1]);
+      if (cellTs === searchTs) {
         var lastCol = Math.max(sheet.getLastColumn(), statusCol + 1);
         sheet.getRange(i + 1, 1, 1, lastCol).setBackground('#FFCCCC');
         sheet.getRange(i + 1, statusCol + 1).setValue('DELETED');
@@ -35,10 +40,10 @@ function doPost(e) {
     var range = sheet.getDataRange();
     var rows = range.getDisplayValues();
     var headers = rows[0];
+    var searchTs = normalizeTs(data.timestamp);
     for (var i = rows.length - 1; i >= 1; i--) {
-      var cellTs = String(rows[i][1]).trim();
-      var searchTs = String(data.timestamp).trim();
-      if (cellTs === searchTs || cellTs.indexOf(searchTs) >= 0 || searchTs.indexOf(cellTs) >= 0) {
+      var cellTs = normalizeTs(rows[i][1]);
+      if (cellTs === searchTs) {
         for (var key in data) {
           if (key === '_action' || key === 'timestamp') continue;
           var colName = key.charAt(0).toUpperCase() + key.slice(1);
@@ -71,7 +76,8 @@ function doPost(e) {
     data.clientPhone,
     data.currency
   ]);
-  // Force Timestamp column to plain text so Sheets doesn't convert it to a Date
+  // Force Timestamp and VisitDate columns to plain text
+  sheet.getRange(newRow, 1).setNumberFormat('@');
   sheet.getRange(newRow, 2).setNumberFormat('@');
 
   return ContentService.createTextOutput(JSON.stringify({status: 'ok'})).setMimeType(ContentService.MimeType.JSON);
