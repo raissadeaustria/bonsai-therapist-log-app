@@ -76,9 +76,11 @@ function doPost(e) {
     data.clientPhone,
     data.currency
   ]);
-  // Force Timestamp and VisitDate columns to plain text
-  sheet.getRange(newRow, 1).setNumberFormat('@');
-  sheet.getRange(newRow, 2).setNumberFormat('@');
+  // Force columns to plain text so Sheets doesn't convert numbers to dates
+  // Col 1=VisitDate, 2=Timestamp, 5=Price, 7=Discount, 9=AmountPaid, 10=Tip
+  [1, 2, 5, 7, 9, 10].forEach(function(col) {
+    sheet.getRange(newRow, col).setNumberFormat('@');
+  });
 
   return ContentService.createTextOutput(JSON.stringify({status: 'ok'})).setMimeType(ContentService.MimeType.JSON);
 }
